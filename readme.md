@@ -1,4 +1,4 @@
-SpriterLove - A Spriter implementation for Love2D
+LoveSpriter - A Spriter implementation for Love2D
 =================================================
 
 By Mr. Wonko
