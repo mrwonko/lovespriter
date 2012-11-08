@@ -1,3 +1,14 @@
+--[[!
+	@file LoveSpriter - A Spriter .scml implementation for Love2D
+	
+	See documentation.
+	
+	@author Willi schinmeyer
+	@date 2012-07-11
+--]]
+
+-------- Simplified XML Parsing --------
+
 --[[
 	@brief Parses (a subset of) XML
 	
@@ -195,4 +206,91 @@ local function ParseSimpleXML( xmlData )
 	return rootContent.childElements[1]
 end
 
-_G.ParseSimpleXML = ParseSimpleXML
+-------- Simple Image Management --------
+
+local images = setmetatable( {}, {__mode = "v"} ) -- weak values, i.e. those are not reference counted
+
+local function DefaultGetImage( filename )
+	local image = images[ filename ]
+	if not image then
+		image = love.graphics.newImage( filename )
+		images[ filename ] = image -- will automatically be garbage collected once not used anymore due to weak values
+	end
+	return image
+end
+
+-------- Entity Class ------
+
+local Entity = {}
+local EntityMetatable = { __index = Entity }
+
+function Entity:draw( self )
+	-- TODO
+end
+
+function Entity:advanceAnimation( self, ms )
+	-- TODO
+end
+
+-- @return success, i.e. whether such an animation exists
+function Entity:setAnimation( self, animNameOrID )
+	-- TODO
+end
+
+-------- Character Class --------
+
+local SpriterData = {}
+local SpriterDataMetatable = { __index = SpriterData }
+
+function NewSpriterData()
+	return setmetatable( {}, SpriterDataMetatable )
+end
+
+-- @return errorMessage on failure, nil on success
+function SpriterData:_loadFromNode( self, rootNode )
+	-- TODO
+	return "Not implemented yet!"
+end
+
+-------- Entry point: Parsing a file --------
+
+local function LoadFile( filename, getImage )
+	-- check parameter types
+	if type( filename ) ~= "string" then
+		error( "Invalid parameter - filename is not a string!", 2 )
+	end
+	-- strictly speaking anything with a __call metatable entry works, too, so...
+	if type( getImage ) ~= "function" and type( getImage ) ~= "nil" and ( getmetatable( getImage ) and getmetatable( getImage ).__call ) then
+		error( "Invalid parameter - getImage is neither callable nor nil!", 2 )
+	end
+	
+	-- default value for getImage
+	getImage = getImage or DefaultGetImage
+	if not love.filesystem.exists( filename ) then
+		return nil, "File does not exist: " .. filename
+	end
+	
+	-- load & parse XML
+	local xmlData = love.filesystem.read( filename )
+	local rootNode, errorMessage = ParseSimpleXML( xmlData )
+	if not rootNode then
+		return nil, "Failed to parse file: " .. filename .. " - " .. errorMessage
+	end
+	
+	-- interpret XML
+	if rootNode.name ~= "spriter_data" then return nil, "No valid SCML file: no sprite_data root element!" end
+	
+	local data = NewSpriterData()
+	
+	errorMessage = data:_loadFromNode( rootNode )
+	
+	if errorMessage then
+		return nil, errorMessage
+	end
+	
+	return data
+end
+
+return {
+	loadFile = LoadFile
+}

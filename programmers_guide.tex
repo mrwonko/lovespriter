@@ -1,0 +1,240 @@
+%% important: set a class
+\documentclass{article}
+
+\usepackage{listings} %% for syntax highlighting
+
+%% teaching listings what lua looks like
+\lstdefinelanguage{Lua}%
+  {morekeywords={function,local,if,then,else,end,elseif,or,and,not,while,do,until,repeat,true,false,nil, require,error},%
+   sensitive,%
+   morecomment=[l]{--},%
+   morecomment=[n]{--[[}{]]},%
+   morestring=[d]',%
+   morestring=[d]"%
+  }[keywords,comments,strings]%
+
+\lstset{ %
+	language=Lua, %
+	breaklines=true %
+}
+
+%% metadata
+\title{LoveSpriter Programmer's Guide}
+\author{Willi Schinmeyer}
+%% \date{2012-07-11} %%uses today's date by default
+
+\begin{document}
+
+%% Create title based on metadata
+\maketitle
+
+\newpage
+
+%% Create table of contents based on chapters
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+
+
+To do: Introduction goes here.
+
+
+
+\newpage
+
+\section{Module}
+
+{\it lovespriter.lua} returns a table containing the exported functions:
+\begin{lstlisting}
+local lovespriter = require("code/lovespriter.lua")
+local character, errorMessage = lovespriter.LoadFile("tests/testcharacter/testcharacter.scml")
+if not charachter then
+	error(errorMessage)
+end
+\end{lstlisting}
+That's the interface you'll use.
+
+
+
+\newpage
+
+\section{Functions}
+
+
+\subsection{loadFile(filename, loadImage)}
+
+Loads the file with the given filename.\\
+If a function loadImage is supplied, it will be used to load images. Otherwise an internal image manager will take care of not loading images twice within the spriter code. See below for an example.\\
+Returns the SpriterCharacter object, or nil, errorMessage on failure.
+\begin{lstlisting}
+local lovespriter = require("code/lovespriter.lua")
+local function getImage( filename )
+	-- Always create a new image, even if the same one is required twice. Note: This is just an example. You'd do better to omit the second parameter, it defaults to something more reasonable.
+	return love.graphics.newImage( filename )
+end
+-- or you could've just passed lover.graphics.newImage as second parameter, but this example is supposed to showcase how getImage should work
+local spriterData, errorMessage = lovespriter.loadFile("tests/testcharacter/testcharacter.scml", getImage)
+if not spriterData then
+	error(errorMessage)
+end
+\end{lstlisting}
+
+
+
+\newpage
+
+		\section{SpriterData Class}
+
+The type of object returned by loadFile().
+
+
+\subsection{variables}
+
+An array of variables.
+
+
+\subsection{tags}
+
+An array of tags.
+
+
+\subsection{entitiesByName}
+
+Table containing each in the file Entity by name (unique).
+
+
+\subsection{entitiesById}
+
+Table containing each in the file Entity by id (unique). They are adjusted to start at 1 with no gaps.
+
+
+
+\newpage
+
+		\section{Variable Class}
+
+Variables are meant for game-related per-file variables.
+
+
+\subsection{name}
+
+String containing this variable's name (unique amongst variables and tags).
+
+
+\subsection{type}
+
+String contianing this variable's type ("float", "int" or "string").
+
+
+\subsection{value}
+
+This variable's value. (number or string, depending on type.)
+
+
+
+
+\newpage
+
+		\section{Tag Class}
+
+
+\subsection{name}
+
+String containing this tag's name (unique amongst variables and tags).
+
+
+
+\newpage
+
+		\section{Entity Class}
+
+A file usually contains at least one Entity, which represent the animateable characters.
+
+
+\subsection{id}
+
+Number containing this entity's id (unique). They are adjusted to start at 1 with no gaps.
+
+
+\subsection{name}
+
+String containing this entity's name (unique).
+
+
+\subsection{draw()}
+
+Draws the entity with the current origin.
+\begin{lstlisting}
+function love.draw()
+	-- adjust origin
+	love.graphics.translate( playerPosX, playerPosY )
+	playerEntity:draw()
+end
+\end{lstlisting}
+
+
+\subsection{advanceAnimation(ms)}
+
+Advances the animation by ms milliseconds. If it's a looping animation, it will start over once the end is reached, otherwise it will stop.
+\begin{lstlisting}
+function love.update(deltaT)
+	playerEntity:advanceAnimation(deltaT/1000)
+end
+\end{lstlisting}
+
+
+\subsection{setAnimation(nameOrId)}
+
+Tries to enable the selected animation.\\
+Returns if it was successfull, i.e. if such an animation exists.
+
+\begin{lstlisting}
+-- let's say walk is essential enough to warrant a fatal error if it's missing
+assert(playerEntity:setAnimation("walk"))
+\end{lstlisting}
+
+
+\subsection{animationsByName}
+
+A table containing each animation of this entity by name (unique to this entity).
+\begin{lstlisting}
+local walk = playerEntity.animations["walk"]
+if walk then
+	assert(walk.name == "walk")
+	if walk.looping then print("It loops!") end
+	if walk.length > 1000 then print("It's over 1s long!") end
+end
+\end{lstlisting}
+
+
+\subsection{animationsById}
+
+A table containing each animation of this entity by id (unique to this entity). They are adjusted to start at 1 with no gaps.
+
+
+
+\newpage
+
+		\section{Animation Class}
+
+A single animation of an entity.
+
+
+\subsection{id}
+
+Number containing this animation's id (unique to this entity). They are adjusted to start at 1 with no gaps.
+
+
+\subsection{name}
+
+String containing this animation's name (unique to this entity).
+
+
+\subsection{length}
+
+Number containing this animation's length in ms.
+
+
+\end{document}
